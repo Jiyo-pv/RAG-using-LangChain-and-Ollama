@@ -49,13 +49,15 @@ User Question
 ## Tech Stack
 
 - **Backend:** Python, Django 6
-- **Database:** SQLite (relational data), ChromaDB (vector embeddings)
+- **Database:** SQLite (default for local dev) / PostgreSQL 16 (via Docker)
+- **Vector Database:** ChromaDB (vector embeddings)
 - **Local LLM:** Ollama running `qwen3.5:4b`
 - **Embeddings:** `sentence-transformers/all-MiniLM-L6-v2`
 - **Reranker:** `cross-encoder/ms-marco-MiniLM-L-6-v2`
 - **Lexical Search:** `rank-bm25` (BM25Okapi)
 - **PDF Extraction:** PyMuPDF (`pymupdf`)
 - **Word Export:** `python-docx`
+- **Containerization:** Docker & Docker Compose
 - **Frontend:** HTML5, Bootstrap 5, Bootstrap Icons, vanilla JavaScript
 
 Both the embedding model and the cross-encoder are loaded as process-level singletons so they only load into memory once when the Django server starts.
@@ -64,44 +66,61 @@ Both the embedding model and the cross-encoder are loaded as process-level singl
 
 ## Getting Started
 
-### 1. Requirements
+### 1. Prerequisites
 
-- Python 3.11+
+- Python 3.11+ (or Docker Desktop)
 - [Ollama](https://ollama.ai/) installed and running
 - Pull the local model:
   ```bash
   ollama pull qwen3.5:4b
   ```
 
-### 2. Installation
+---
 
-Clone or extract the repository, then create and activate a virtual environment:
+### Option A: Run with Docker & PostgreSQL (Recommended)
+
+Docker sets up both the Django web application and a **PostgreSQL 16** database container automatically with persistent storage:
+
+1. Start Ollama on your host machine:
+   ```bash
+   ollama run qwen3.5:4b
+   ```
+2. In your terminal, go to the project folder and launch:
+   ```powershell
+   cd Paledoc
+   docker compose up --build
+   ```
+3. Open [http://localhost:8000](http://localhost:8000) in your browser.
+
+Useful Docker commands:
+- Run in background: `docker compose up -d`
+- View logs: `docker compose logs -f`
+- Stop containers: `docker compose down`
+
+---
+
+### Option B: Run Locally (with SQLite)
+
+If you prefer to run directly without Docker:
 
 ```powershell
-# Windows PowerShell
+cd Paledoc
+
+# 1. Create and activate a virtual environment
 python -m venv venv
 .\venv\Scripts\Activate.ps1
-```
 
-Install dependencies:
-
-```powershell
+# 2. Install dependencies
 pip install -r requirements.txt
-```
 
-### 3. Run Migrations
-
-```powershell
+# 3. Run database migrations
 python manage.py migrate
-```
 
-### 4. Start the Server
-
-```powershell
+# 4. Start the development server
 python manage.py runserver
 ```
 
-Open [http://127.0.0.1:8000](http://127.0.0.1:8000) in your browser. Register a new account to start uploading documents.
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000) in your browser.
 
 ---
 
@@ -110,7 +129,13 @@ Open [http://127.0.0.1:8000](http://127.0.0.1:8000) in your browser. Register a 
 To run the full automated test suite:
 
 ```powershell
+cd Paledoc
 python manage.py test documents
+```
+
+Or inside Docker:
+```powershell
+docker compose exec web python manage.py test documents
 ```
 
 The test suite covers:
@@ -149,6 +174,9 @@ Paledoc/
 │   ├── base.html           # Sidebar layout template
 │   ├── accounts/           # Login and register pages
 │   └── documents/          # Dashboard, chat, upload, analysis templates
+├── Dockerfile              # Container image specification
+├── docker-compose.yml      # Orchestrates Django + PostgreSQL
+├── .dockerignore           # Excludes local files from image build
 ├── manage.py
 ├── requirements.txt
 └── README.md
