@@ -1,5 +1,5 @@
-# Use a lightweight official Python image
-FROM python:3.11-slim
+# Use a lightweight official Python 3.12 image (required by Django 6+)
+FROM python:3.12-slim
 
 # Prevent Python from writing .pyc files and buffer stdout/stderr
 ENV PYTHONDONTWRITEBYTECODE=1
