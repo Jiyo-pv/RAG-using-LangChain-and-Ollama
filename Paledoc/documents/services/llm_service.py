@@ -1,3 +1,4 @@
+import os
 import threading
 from langchain_ollama import ChatOllama
 
@@ -10,8 +11,10 @@ def get_llm():
     if _llm is None:
         with _lock:
             if _llm is None:
+                base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
                 _llm = ChatOllama(
                     model="qwen3.5:4b",
-                    temperature=0
+                    base_url=base_url,
+                    temperature=0,
                 )
     return _llm

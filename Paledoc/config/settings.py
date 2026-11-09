@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-(2d%f*tme)_9_lnh8x=#g#)v#^tc3nex#^&t(i_c)%=96%y#h7
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -73,14 +73,27 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 
 # Database
-# https://docs.djangoproject.com/en/6.1/ref/settings/#databases
+# Uses PostgreSQL if DB_HOST is configured (e.g. in Docker), otherwise defaults to SQLite
+import os
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if os.getenv('USE_POSTGRES', 'False').lower() in ('true', '1', 'yes') or os.getenv('DB_HOST'):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_NAME', 'paledoc_db'),
+            'USER': os.getenv('DB_USER', 'paledoc_user'),
+            'PASSWORD': os.getenv('DB_PASSWORD', 'paledoc_password'),
+            'HOST': os.getenv('DB_HOST', 'db'),
+            'PORT': os.getenv('DB_PORT', '5432'),
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
