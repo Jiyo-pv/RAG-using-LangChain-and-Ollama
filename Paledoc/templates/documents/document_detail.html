@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ document.title }} — Paledoc{% endblock %}
+{% block page_title %}Document Detail{% endblock %}
+{% block nav_upload %}active{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'document_list' %}" class="text-muted text-decoration-none small">
+        <i class="bi bi-arrow-left me-1"></i> Back to My Documents
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-file-earmark-pdf-fill text-danger me-2"></i>{{ document.title }}
+                </h5>
+                {% if document.status == 'completed' %}
+                    <span class="badge bg-success">Completed</span>
+                {% elif document.status == 'processing' %}
+                    <span class="badge bg-warning text-dark">
+                        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                        Processing
+                    </span>
+                {% elif document.status == 'failed' %}
+                    <span class="badge bg-danger">Failed</span>
+                {% else %}
+                    <span class="badge bg-secondary">Pending</span>
+                {% endif %}
+            </div>
+            <div class="card-body p-4">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4 text-muted fw-normal">Filename</dt>
+                    <dd class="col-sm-8">{{ document.original_filename|default:document.title }}</dd>
+
+                    <dt class="col-sm-4 text-muted fw-normal">Pages</dt>
+                    <dd class="col-sm-8">{{ document.page_count|default:"Unknown" }}</dd>
+
+                    <dt class="col-sm-4 text-muted fw-normal">File Size</dt>
+                    <dd class="col-sm-8">{{ document.file_size|filesizeformat|default:"Unknown" }}</dd>
+
+                    <dt class="col-sm-4 text-muted fw-normal">Uploaded</dt>
+                    <dd class="col-sm-8">{{ document.uploaded_at|date:"F d, Y \a\t g:i A" }}</dd>
+
+                    <dt class="col-sm-4 text-muted fw-normal">Status</dt>
+                    <dd class="col-sm-8">
+                        {% if document.status == 'completed' %}
+                            <span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Indexed and ready</span>
+                        {% elif document.status == 'processing' %}
+                            <span class="text-warning"><i class="bi bi-hourglass-split me-1"></i>Processing…</span>
+                        {% elif document.status == 'failed' %}
+                            <span class="text-danger"><i class="bi bi-x-circle-fill me-1"></i>Indexing failed</span>
+                        {% else %}
+                            <span class="text-secondary"><i class="bi bi-clock me-1"></i>Pending</span>
+                        {% endif %}
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body p-4">
+                <h6 class="fw-bold mb-3">Actions</h6>
+                <div class="d-grid gap-2">
+                    {% if document.file %}
+                    <a href="{{ document.file.url }}" target="_blank" class="btn btn-primary">
+                        <i class="bi bi-file-earmark-pdf-fill me-1"></i> Download / View PDF
+                    </a>
+                    {% endif %}
+
+                    <form method="POST" action="{% url 'reindex_document' document.pk %}">
+                        {% csrf_token %}
+                        <button type="submit"
+                            class="btn btn-outline-primary w-100"
+                            onclick="return confirm('Re-index this document? This will rebuild its search index.')">
+                            <i class="bi bi-arrow-repeat me-1"></i> Re-index Document
+                        </button>
+                    </form>
+
+                    <a href="{% url 'delete_document' document.pk %}" class="btn btn-outline-danger">
+                        <i class="bi bi-trash me-1"></i> Delete Document
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <h6 class="fw-bold mb-3"><i class="bi bi-chat-dots-fill text-primary me-1"></i> Ask About This Document</h6>
+                <p class="small text-muted mb-3">Use AI Chat to ask questions specifically about this document.</p>
+                <a href="{% url 'chat' %}" class="btn btn-outline-primary w-100">
+                    <i class="bi bi-chat-dots me-1"></i> Open AI Chat
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

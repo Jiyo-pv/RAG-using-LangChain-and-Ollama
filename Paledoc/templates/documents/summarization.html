@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}Document Summarization — Paledoc{% endblock %}
+{% block page_title %}Document Summarization{% endblock %}
+{% block nav_summarize %}active{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Left form column -->
+    <div class="col-lg-4 mb-4">
+        <div class="card border-0 shadow-sm rounded-3 bg-white">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-sliders text-primary me-2"></i>Summary Options</h6>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-muted text-uppercase">1. Select Document</label>
+                        <select name="document_id" class="form-select" required>
+                            <option value="">-- Choose from uploaded PDFs --</option>
+                            {% for doc in user_documents %}
+                            <option value="{{ doc.id }}" {% if selected_doc and selected_doc.id == doc.id %}selected{% endif %}>
+                                {{ doc.title }} ({{ doc.page_count }} pages)
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% if not user_documents %}
+                        <div class="form-text text-danger">No indexed documents found. Please upload a PDF first.</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold small text-muted text-uppercase">2. Summary Depth</label>
+                        <div class="d-flex flex-column gap-2">
+                            <label class="list-group-item d-flex gap-2 p-2 border rounded">
+                                <input class="form-check-input flex-shrink-0" type="radio" name="summary_type" value="summary_short" {% if summary_type == 'summary_short' %}checked{% endif %}>
+                                <div>
+                                    <span class="fw-semibold d-block text-dark small">Executive Summary</span>
+                                    <small class="text-muted" style="font-size: 0.75rem;">2-3 high-level paragraphs focusing on core theme and outcomes.</small>
+                                </div>
+                            </label>
+
+                            <label class="list-group-item d-flex gap-2 p-2 border rounded">
+                                <input class="form-check-input flex-shrink-0" type="radio" name="summary_type" value="summary_detailed" {% if summary_type == 'summary_detailed' %}checked{% endif %}>
+                                <div>
+                                    <span class="fw-semibold d-block text-dark small">Detailed Summary</span>
+                                    <small class="text-muted" style="font-size: 0.75rem;">Comprehensive overview with arguments, methodologies, and findings.</small>
+                                </div>
+                            </label>
+
+                            <label class="list-group-item d-flex gap-2 p-2 border rounded">
+                                <input class="form-check-input flex-shrink-0" type="radio" name="summary_type" value="summary_sections" {% if summary_type == 'summary_sections' %}checked{% endif %}>
+                                <div>
+                                    <span class="fw-semibold d-block text-dark small">Section-wise Breakdown</span>
+                                    <small class="text-muted" style="font-size: 0.75rem;">Deconstructs each major topic and chapter with key takeaways.</small>
+                                </div>
+                            </label>
+
+                            <label class="list-group-item d-flex gap-2 p-2 border rounded">
+                                <input class="form-check-input flex-shrink-0" type="radio" name="summary_type" value="summary_findings" {% if summary_type == 'summary_findings' %}checked{% endif %}>
+                                <div>
+                                    <span class="fw-semibold d-block text-dark small">Key Findings & Concepts</span>
+                                    <small class="text-muted" style="font-size: 0.75rem;">Bulleted list of empirical findings and core terminology defined.</small>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold" {% if not user_documents %}disabled{% endif %}>
+                        <i class="bi bi-magic me-1"></i> Generate Summary
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right result column -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-3 bg-white h-100">
+            <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold text-dark">
+                    <i class="bi bi-file-earmark-text text-primary me-2"></i>
+                    {% if selected_doc %}
+                        {{ selected_doc.title }}
+                    {% else %}
+                        Generated Summary
+                    {% endif %}
+                </h6>
+                {% if report_id %}
+                <a href="{% url 'export_report_docx' report_id %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-file-earmark-word me-1"></i> Export to Word (.docx)
+                </a>
+                {% endif %}
+            </div>
+            <div class="card-body p-4">
+                {% if result_text %}
+                <div class="result-box p-3 bg-light rounded-3 border" style="white-space: pre-wrap; line-height: 1.8; font-size: 0.95rem;">
+{{ result_text }}
+                </div>
+                {% else %}
+                <div class="text-center p-5 text-muted my-auto">
+                    <i class="bi bi-file-earmark-text display-4 text-secondary opacity-50 d-block mb-3"></i>
+                    <h6 class="fw-bold">No Summary Generated Yet</h6>
+                    <p class="small text-muted mb-0">Select a document from your library and choose your preferred summary depth to begin.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,478 @@
+{% extends "base.html" %}
+
+{% block title %}AI Chat — {{ conversation.title|default:"New Chat" }} — Paledoc{% endblock %}
+{% block page_title %}AI Chat{% endblock %}
+{% block nav_chat %}active{% endblock %}
+
+{% block extra_head %}
+<style>
+    .chat-layout {
+        display: flex;
+        height: calc(100vh - var(--topbar-height) - 4rem);
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+    }
+
+    /* Left session list */
+    .chat-sidebar {
+        width: 280px;
+        border-right: 1px solid #e2e8f0;
+        display: flex;
+        flex-direction: column;
+        background: #f8fafc;
+    }
+
+    .chat-sidebar-header {
+        padding: 1rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .chat-sidebar-list {
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .chat-session-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #f1f5f9;
+        text-decoration: none;
+        color: #475569;
+        font-size: 0.88rem;
+        transition: all 0.15s;
+    }
+
+    .chat-session-item:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+    }
+
+    .chat-session-item.active {
+        background: #ffffff;
+        color: #2563eb;
+        font-weight: 600;
+        border-left: 3px solid #2563eb;
+    }
+
+    /* Main chat area */
+    .chat-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #ffffff;
+    }
+
+    .chat-header {
+        padding: 0.85rem 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #ffffff;
+    }
+
+    .chat-messages {
+        flex: 1;
+        padding: 1.5rem;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+        background: #f8fafc;
+    }
+
+    /* Message bubbles */
+    .msg-wrapper {
+        display: flex;
+        gap: 0.85rem;
+        max-width: 82%;
+    }
+
+    .msg-user {
+        align-self: flex-end;
+        flex-direction: row-reverse;
+    }
+
+    .msg-assistant {
+        align-self: flex-start;
+    }
+
+    .msg-avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .msg-user .msg-avatar {
+        background: #2563eb;
+        color: #fff;
+    }
+
+    .msg-assistant .msg-avatar {
+        background: #0f172a;
+        color: #38bdf8;
+    }
+
+    .msg-body {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        padding: 1rem 1.25rem;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+
+    .msg-user .msg-body {
+        background: #2563eb;
+        color: #ffffff;
+        border-color: #2563eb;
+    }
+
+    .msg-content {
+        white-space: pre-wrap;
+        line-height: 1.6;
+        font-size: 0.95rem;
+    }
+
+    .msg-meta {
+        font-size: 0.72rem;
+        margin-top: 0.4rem;
+        opacity: 0.7;
+    }
+
+    /* Sources container */
+    .source-pill-card {
+        background: #f1f5f9;
+        border-left: 3px solid #3b82f6;
+        padding: 0.5rem 0.75rem;
+        margin-top: 0.6rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+    }
+
+    /* Input area */
+    .chat-input-area {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #e2e8f0;
+        background: #ffffff;
+    }
+
+    .chat-textarea {
+        resize: none;
+        max-height: 120px;
+        border-radius: 8px;
+        font-size: 0.92rem;
+    }
+
+    #loading-indicator {
+        display: none;
+        align-self: flex-start;
+        padding: 0.75rem 1.25rem;
+        background: #f1f5f9;
+        border-radius: 8px;
+        color: #64748b;
+        font-size: 0.88rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-layout">
+    <!-- Sessions Sidebar -->
+    <div class="chat-sidebar">
+        <div class="chat-sidebar-header d-flex justify-content-between align-items-center">
+            <span class="fw-bold small text-uppercase text-muted"><i class="bi bi-clock-history me-1"></i> Chats</span>
+            <a href="{% url 'new_chat' %}" class="btn btn-sm btn-primary">
+                <i class="bi bi-plus-lg me-1"></i> New
+            </a>
+        </div>
+        <div class="chat-sidebar-list">
+            {% for c in conversations %}
+            <a href="{% url 'chat_conversation' c.id %}" class="chat-session-item {% if c.id == conversation.id %}active{% endif %}">
+                <span class="text-truncate me-2">{{ c.title }}</span>
+                <small class="text-muted" style="font-size: 0.7rem;">{{ c.updated_at|date:"M d" }}</small>
+            </a>
+            {% empty %}
+            <div class="p-3 text-center text-muted small">No conversations yet.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Main Chat Window -->
+    <div class="chat-main">
+        <!-- Top header -->
+        <div class="chat-header">
+            <div>
+                <h6 class="fw-bold text-dark mb-0">{{ conversation.title }}</h6>
+                <small class="text-muted">
+                    <i class="bi bi-file-earmark-pdf text-danger"></i>
+                    {{ conversation.documents.count }} active document(s) in scope
+                </small>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <!-- Manage Active Documents Modal Trigger -->
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#docsModal">
+                    <i class="bi bi-funnel me-1"></i> Filter Documents
+                </button>
+
+                <!-- Delete Conversation Form -->
+                <form method="POST" action="{% url 'delete_conversation' conversation.id %}" onsubmit="return confirm('Delete this entire chat?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete conversation">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Messages thread -->
+        <div class="chat-messages" id="messages-container">
+            {% if not messages_list %}
+            <div class="text-center my-auto p-4 text-muted">
+                <i class="bi bi-robot display-5 text-primary opacity-50 d-block mb-3"></i>
+                <h5 class="fw-bold text-dark mb-1">What would you like to know?</h5>
+                <p class="small mb-3" style="max-width: 480px; margin: 0 auto;">
+                    Paledoc searches your selected documents using Hybrid Retrieval (BM25 + Semantic Search + Cross-Encoder Reranker) and answers strictly from verified document context.
+                </p>
+                <div class="d-flex justify-content-center gap-2 flex-wrap">
+                    <span class="badge bg-light text-dark border p-2">"Summarize the main methodology"</span>
+                    <span class="badge bg-light text-dark border p-2">"What are the key findings?"</span>
+                    <span class="badge bg-light text-dark border p-2">"What datasets were analyzed?"</span>
+                </div>
+            </div>
+            {% endif %}
+
+            {% for msg in messages_list %}
+            <div class="msg-wrapper {% if msg.role == 'user' %}msg-user{% else %}msg-assistant{% endif %}">
+                <div class="msg-avatar">
+                    {% if msg.role == 'user' %}
+                        {{ request.user.username|first|upper }}
+                    {% else %}
+                        <i class="bi bi-cpu"></i>
+                    {% endif %}
+                </div>
+                <div class="msg-body">
+                    <div class="msg-content">{{ msg.content }}</div>
+
+                    {% if msg.sources %}
+                    <div class="mt-2 pt-2 border-top border-light">
+                        <small class="fw-bold text-primary d-block mb-1" style="font-size: 0.75rem;">
+                            <i class="bi bi-journal-text me-1"></i> Verified Sources ({{ msg.sources|length }} cited):
+                        </small>
+                        {% for src in msg.sources %}
+                        <div class="source-pill-card text-dark">
+                            <strong>{{ src.filename }}</strong> &bull; <span class="text-muted">Page {{ src.page }}</span>
+                            <div class="text-muted small mt-1 font-monospace" style="font-size: 0.75rem;">"{{ src.excerpt }}"</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="msg-meta text-end">{{ msg.created_at|date:"g:i A" }}</div>
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- Loading Spinner -->
+            <div id="loading-indicator">
+                <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                Paledoc is retrieving chunks, reranking candidates, and formulating answer...
+            </div>
+        </div>
+
+        <!-- Input Box -->
+        <div class="chat-input-area">
+            <form id="chat-form" method="POST" action="{% url 'chat_send_message' conversation.id %}">
+                {% csrf_token %}
+                <div class="input-group">
+                    <textarea
+                        id="chat-textarea"
+                        name="question"
+                        class="form-control chat-textarea"
+                        rows="2"
+                        placeholder="Type a question about your documents... (Press Enter to send, Shift+Enter for new line)"
+                        required
+                    ></textarea>
+                    <button class="btn btn-primary px-4 d-flex align-items-center" type="submit" id="send-btn">
+                        <i class="bi bi-send-fill fs-5"></i>
+                    </button>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                    <small class="text-muted" style="font-size: 0.72rem;">
+                        <i class="bi bi-shield-check text-success me-1"></i> Server-side user isolated &bull; No cloud APIs
+                    </small>
+                    <small class="text-muted" style="font-size: 0.72rem;">
+                        Enter to send &bull; Shift + Enter for newline
+                    </small>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Document Selection Modal -->
+<div class="modal fade" id="docsModal" tabindex="-1" aria-labelledby="docsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="update_documents" value="1">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="docsModalLabel">Filter Active Documents</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small">Select which uploaded documents the AI should search for this conversation:</p>
+                    {% if user_documents %}
+                        <div class="list-group">
+                            {% for doc in user_documents %}
+                            <label class="list-group-item d-flex gap-2 align-items-center">
+                                <input class="form-check-input flex-shrink-0" type="checkbox" name="doc_ids" value="{{ doc.id }}" {% if doc.id in active_doc_ids %}checked{% endif %}>
+                                <span>
+                                    <span class="fw-semibold d-block text-dark">{{ doc.title }}</span>
+                                    <small class="text-muted">{{ doc.original_filename|default:doc.title }} ({{ doc.page_count }} pages)</small>
+                                </span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info small mb-0">No completed documents uploaded yet. Upload PDFs first.</div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Apply Selection</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const messagesContainer = document.getElementById('messages-container');
+    const chatForm = document.getElementById('chat-form');
+    const textarea = document.getElementById('chat-textarea');
+    const loadingIndicator = document.getElementById('loading-indicator');
+    const sendBtn = document.getElementById('send-btn');
+
+    // Auto-scroll to bottom of chat
+    function scrollToBottom() {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    scrollToBottom();
+
+    // Support Enter to send, Shift+Enter for newline
+    textarea.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if (textarea.value.trim().length > 0) {
+                chatForm.dispatchEvent(new Event('submit', { cancelable: true }));
+            }
+        }
+    });
+
+    // AJAX form submission for smooth chat experience
+    chatForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const text = textarea.value.trim();
+        if (!text) return;
+
+        // Append user bubble immediately
+        const userHtml = `
+            <div class="msg-wrapper msg-user">
+                <div class="msg-avatar">{{ request.user.username|first|upper }}</div>
+                <div class="msg-body">
+                    <div class="msg-content">${escapeHtml(text)}</div>
+                    <div class="msg-meta text-end">Just now</div>
+                </div>
+            </div>
+        `;
+        loadingIndicator.insertAdjacentHTML('beforebegin', userHtml);
+        textarea.value = '';
+        loadingIndicator.style.display = 'block';
+        sendBtn.disabled = true;
+        scrollToBottom();
+
+        try {
+            const response = await fetch("{{ request.path }}send/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                body: JSON.stringify({ question: text })
+            });
+
+            if (!response.ok) {
+                throw new Error("Server returned status " + response.status);
+            }
+
+            const data = await response.json();
+            if (data.success && data.assistant_message) {
+                let sourcesHtml = '';
+                if (data.assistant_message.sources && data.assistant_message.sources.length > 0) {
+                    sourcesHtml = `
+                        <div class="mt-2 pt-2 border-top border-light">
+                            <small class="fw-bold text-primary d-block mb-1" style="font-size: 0.75rem;">
+                                <i class="bi bi-journal-text me-1"></i> Verified Sources (${data.assistant_message.sources.length} cited):
+                            </small>
+                            ${data.assistant_message.sources.map(s => `
+                                <div class="source-pill-card text-dark">
+                                    <strong>${escapeHtml(s.filename)}</strong> &bull; <span class="text-muted">Page ${s.page}</span>
+                                    <div class="text-muted small mt-1 font-monospace" style="font-size: 0.75rem;">"${escapeHtml(s.excerpt)}"</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
+                const asstHtml = `
+                    <div class="msg-wrapper msg-assistant">
+                        <div class="msg-avatar"><i class="bi bi-cpu"></i></div>
+                        <div class="msg-body">
+                            <div class="msg-content">${escapeHtml(data.assistant_message.content)}</div>
+                            ${sourcesHtml}
+                            <div class="msg-meta text-end">${data.assistant_message.created_at}</div>
+                        </div>
+                    </div>
+                `;
+                loadingIndicator.insertAdjacentHTML('beforebegin', asstHtml);
+            }
+        } catch (err) {
+            const errHtml = `
+                <div class="msg-wrapper msg-assistant">
+                    <div class="msg-avatar text-danger"><i class="bi bi-exclamation-triangle"></i></div>
+                    <div class="msg-body border-danger">
+                        <div class="text-danger">⚠️ Communication Error: Could not get response from AI. Please check that Ollama is running. (${escapeHtml(err.message)})</div>
+                    </div>
+                </div>
+            `;
+            loadingIndicator.insertAdjacentHTML('beforebegin', errHtml);
+        } finally {
+            loadingIndicator.style.display = 'none';
+            sendBtn.disabled = false;
+            scrollToBottom();
+            textarea.focus();
+        }
+    });
+
+    function escapeHtml(string) {
+        const div = document.createElement('div');
+        div.innerText = string;
+        return div.innerHTML;
+    }
+</script>
+{% endblock %}

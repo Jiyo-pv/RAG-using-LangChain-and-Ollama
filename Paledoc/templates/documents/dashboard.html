@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard — Paledoc AI Intelligence{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+
+{% block content %}
+<!-- Welcome & Quick Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-3 p-3 bg-white h-100">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-semibold text-uppercase">Total Documents</span>
+                    <h3 class="fw-bold text-dark mt-1 mb-0">{{ doc_count }}</h3>
+                    <small class="text-success fw-medium"><i class="bi bi-file-earmark-check"></i> In Library</small>
+                </div>
+                <div class="rounded-3 p-3 bg-primary bg-opacity-10 text-primary">
+                    <i class="bi bi-files" style="font-size: 1.5rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-3 p-3 bg-white h-100">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-semibold text-uppercase">Indexed & Ready</span>
+                    <h3 class="fw-bold text-success mt-1 mb-0">{{ completed_count }}</h3>
+                    <small class="text-muted fw-medium"><i class="bi bi-cpu"></i> ChromaDB Vectorized</small>
+                </div>
+                <div class="rounded-3 p-3 bg-success bg-opacity-10 text-success">
+                    <i class="bi bi-database-check" style="font-size: 1.5rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-3 p-3 bg-white h-100">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-semibold text-uppercase">AI Chats</span>
+                    <h3 class="fw-bold text-primary mt-1 mb-0">{{ conv_count }}</h3>
+                    <small class="text-muted fw-medium"><i class="bi bi-chat-left-text"></i> Persistent Sessions</small>
+                </div>
+                <div class="rounded-3 p-3 bg-info bg-opacity-10 text-info">
+                    <i class="bi bi-chat-square-dots-fill" style="font-size: 1.5rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-3 p-3 bg-white h-100">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-semibold text-uppercase">Intelligence Reports</span>
+                    <h3 class="fw-bold text-warning mt-1 mb-0">{{ report_count }}</h3>
+                    <small class="text-muted fw-medium"><i class="bi bi-file-earmark-word"></i> Word Exportable</small>
+                </div>
+                <div class="rounded-3 p-3 bg-warning bg-opacity-10 text-warning">
+                    <i class="bi bi-file-earmark-richtext-fill" style="font-size: 1.5rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-3 bg-white p-3">
+            <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                <span class="fw-bold text-dark small text-uppercase letter-spacing"><i class="bi bi-lightning-charge-fill text-warning me-1"></i> Quick Intelligence Tools:</span>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{% url 'upload' %}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-upload me-1"></i> Upload PDF
+                    </a>
+                    <a href="{% url 'new_chat' %}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-chat-plus-fill me-1"></i> New AI Chat
+                    </a>
+                    <a href="{% url 'summarization' %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-file-text me-1"></i> Summarize
+                    </a>
+                    <a href="{% url 'comparison' %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-intersect me-1"></i> Compare Papers
+                    </a>
+                    <a href="{% url 'research_analysis' %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-graph-up-arrow me-1"></i> Research Analysis
+                    </a>
+                    <a href="{% url 'reference_generator' %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-bookmark-check me-1"></i> Citations
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Documents & Recent Activity -->
+<div class="row g-4">
+    <!-- Documents List -->
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm rounded-3 bg-white h-100">
+            <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-files text-primary me-2"></i>Recent Documents</h6>
+                <a href="{% url 'document_list' %}" class="text-primary text-decoration-none small fw-semibold">View All &rarr;</a>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_documents %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-muted small">
+                            <tr>
+                                <th class="ps-3">Title</th>
+                                <th>Status</th>
+                                <th>Pages</th>
+                                <th class="pe-3 text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for doc in recent_documents %}
+                            <tr>
+                                <td class="ps-3">
+                                    <div class="fw-semibold text-dark text-truncate" style="max-width: 250px;">
+                                        <i class="bi bi-file-earmark-pdf text-danger me-1"></i> {{ doc.title }}
+                                    </div>
+                                    <small class="text-muted">{{ doc.uploaded_at|date:"M d, Y" }}</small>
+                                </td>
+                                <td>
+                                    {% if doc.status == 'completed' %}
+                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">Ready</span>
+                                    {% elif doc.status == 'processing' %}
+                                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25">Indexing</span>
+                                    {% elif doc.status == 'failed' %}
+                                        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">Failed</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-muted small">{{ doc.page_count|default:"—" }}</td>
+                                <td class="pe-3 text-end">
+                                    <a href="{% url 'document_detail' doc.id %}" class="btn btn-sm btn-light border py-1 px-2">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-5 text-center text-muted">
+                    <i class="bi bi-file-earmark-arrow-up display-6 d-block mb-3 text-secondary opacity-50"></i>
+                    <p class="mb-2">No documents uploaded yet.</p>
+                    <a href="{% url 'upload' %}" class="btn btn-sm btn-primary">Upload your first PDF</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Chats & Saved Reports -->
+    <div class="col-lg-5">
+        <!-- Recent Chats -->
+        <div class="card border-0 shadow-sm rounded-3 bg-white mb-4">
+            <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-chat-square-dots text-info me-2"></i>Recent Chats</h6>
+                <a href="{% url 'new_chat' %}" class="btn btn-sm btn-outline-primary py-0 px-2">+ New</a>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for conv in recent_conversations %}
+                <a href="{% url 'chat_conversation' conv.id %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2 px-3">
+                    <div class="text-truncate me-2">
+                        <div class="fw-semibold text-dark text-truncate" style="max-width: 240px;">{{ conv.title }}</div>
+                        <small class="text-muted">{{ conv.updated_at|timesince }} ago &bull; {{ conv.messages.count }} messages</small>
+                    </div>
+                    <i class="bi bi-chevron-right text-muted small"></i>
+                </a>
+                {% empty %}
+                <div class="p-3 text-center text-muted small">No conversations yet.</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Recent Reports -->
+        <div class="card border-0 shadow-sm rounded-3 bg-white">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-file-earmark-richtext text-warning me-2"></i>Generated Reports</h6>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for r in recent_reports %}
+                <div class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                    <div class="text-truncate me-2">
+                        <div class="fw-semibold text-dark text-truncate" style="max-width: 220px;">{{ r.title }}</div>
+                        <small class="text-muted">{{ r.created_at|date:"M d" }} &bull; {{ r.get_report_type_display }}</small>
+                    </div>
+                    <a href="{% url 'export_report_docx' r.id %}" class="btn btn-sm btn-outline-secondary py-1 px-2" title="Export to Word (.docx)">
+                        <i class="bi bi-file-earmark-word text-primary"></i>
+                    </a>
+                </div>
+                {% empty %}
+                <div class="p-3 text-center text-muted small">No reports generated yet.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

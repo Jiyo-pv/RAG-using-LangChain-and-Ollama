@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Multi-Document Comparison — Paledoc{% endblock %}
+{% block page_title %}Multi-Document Comparison{% endblock %}
+{% block nav_compare %}active{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Left column: document selector -->
+    <div class="col-lg-4 mb-4">
+        <div class="card border-0 shadow-sm rounded-3 bg-white">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-intersect text-primary me-2"></i>Select Documents to Compare</h6>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    {% csrf_token %}
+                    <p class="text-muted small">Choose 2 or more research papers or reports to analyze their similarities, differences, and methodologies:</p>
+
+                    <div class="mb-4">
+                        {% if user_documents %}
+                        <div class="list-group">
+                            {% for doc in user_documents %}
+                            <label class="list-group-item d-flex gap-2 align-items-center py-2 px-3 border rounded mb-2">
+                                <input class="form-check-input flex-shrink-0" type="checkbox" name="doc_ids" value="{{ doc.id }}" {% if doc.id|stringformat:"s" in selected_doc_ids %}checked{% endif %}>
+                                <div>
+                                    <span class="fw-semibold d-block text-dark small text-truncate" style="max-width: 220px;">{{ doc.title }}</span>
+                                    <small class="text-muted" style="font-size: 0.72rem;">{{ doc.original_filename|default:doc.title }} &bull; {{ doc.page_count }} pages</small>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info small">You need at least 2 uploaded documents to run comparative analysis.</div>
+                        {% endif %}
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold" {% if user_documents|length < 2 %}disabled{% endif %}>
+                        <i class="bi bi-arrow-left-right me-1"></i> Compare Selected Documents
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right column: comparison output -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-3 bg-white h-100">
+            <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-file-earmark-diff text-primary me-2"></i>Comparative Analysis Report</h6>
+                {% if report_id %}
+                <a href="{% url 'export_report_docx' report_id %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-file-earmark-word me-1"></i> Export to Word (.docx)
+                </a>
+                {% endif %}
+            </div>
+            <div class="card-body p-4">
+                {% if result_text %}
+                <div class="p-3 bg-light rounded-3 border" style="white-space: pre-wrap; line-height: 1.8; font-size: 0.95rem;">
+{{ result_text }}
+                </div>
+                {% else %}
+                <div class="text-center p-5 text-muted my-auto">
+                    <i class="bi bi-intersect display-4 text-secondary opacity-50 d-block mb-3"></i>
+                    <h6 class="fw-bold">No Comparison Run Yet</h6>
+                    <p class="small text-muted mb-0">Select 2 or more documents from the left panel and click Compare to identify shared themes, divergent methodology, and key differences.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

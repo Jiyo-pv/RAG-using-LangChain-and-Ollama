@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}System Settings & Architecture — Paledoc{% endblock %}
+{% block page_title %}System Settings & Architecture{% endblock %}
+{% block nav_settings %}active{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-6">
+        <!-- AI & Local Engine Status -->
+        <div class="card border-0 shadow-sm rounded-3 bg-white mb-4">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-cpu-fill text-primary me-2"></i>Local AI Runtime Status</h6>
+            </div>
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded-3 mb-3 border">
+                    <div>
+                        <span class="text-muted small d-block">Ollama Service Status</span>
+                        <span class="fw-bold fs-6 {% if 'Connected' in ollama_status %}text-success{% else %}text-danger{% endif %}">
+                            <i class="bi bi-circle-fill" style="font-size: 0.65rem;"></i> {{ ollama_status }}
+                        </span>
+                    </div>
+                    <div>
+                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 p-2">Local Host: 11434</span>
+                    </div>
+                </div>
+
+                {% if ollama_error %}
+                <div class="alert alert-warning small mb-3">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i> <strong>Notice:</strong> {{ ollama_error }}
+                    <div class="mt-1">Make sure Ollama is launched (`ollama run qwen3.5:4b`).</div>
+                </div>
+                {% endif %}
+
+                <dl class="row mb-0 small">
+                    <dt class="col-sm-5 text-muted">Inference Model</dt>
+                    <dd class="col-sm-7 fw-semibold text-dark">{{ llm_model }}</dd>
+
+                    <dt class="col-sm-5 text-muted">Embedding Model</dt>
+                    <dd class="col-sm-7 fw-semibold text-dark">{{ embedding_model }}</dd>
+
+                    <dt class="col-sm-5 text-muted">Reranker Model</dt>
+                    <dd class="col-sm-7 fw-semibold text-dark">{{ reranker_model }}</dd>
+
+                    <dt class="col-sm-5 text-muted">Target Hardware</dt>
+                    <dd class="col-sm-7 text-dark">NVIDIA GTX 1650 4GB / 16GB RAM Optimized</dd>
+                </dl>
+            </div>
+        </div>
+
+        <!-- Vector Database -->
+        <div class="card border-0 shadow-sm rounded-3 bg-white">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-database text-success me-2"></i>ChromaDB Vector Store</h6>
+            </div>
+            <div class="card-body p-4">
+                <dl class="row mb-0 small">
+                    <dt class="col-sm-5 text-muted">Indexed Chunks Count</dt>
+                    <dd class="col-sm-7 fw-bold text-success">{{ vector_count }} vectors</dd>
+
+                    <dt class="col-sm-5 text-muted">Collection Name</dt>
+                    <dd class="col-sm-7 font-monospace">paledoc_documents</dd>
+
+                    <dt class="col-sm-5 text-muted">Storage Path</dt>
+                    <dd class="col-sm-7 font-monospace text-break">{{ chroma_dir }}</dd>
+
+                    <dt class="col-sm-5 text-muted">User Isolation</dt>
+                    <dd class="col-sm-7 text-success"><i class="bi bi-shield-lock-fill"></i> Server-side metadata filtering</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pipeline Architecture -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-3 bg-white h-100">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-diagram-3-fill text-info me-2"></i>Advanced Hybrid RAG Pipeline</h6>
+            </div>
+            <div class="card-body p-4">
+                <div class="p-3 bg-light rounded-3 border mb-3">
+                    <h6 class="fw-bold small text-primary mb-2 text-uppercase">End-to-End Processing Architecture</h6>
+                    <ol class="small text-muted mb-0 ps-3" style="line-height: 1.8;">
+                        <li><strong>PDF Extraction:</strong> PyMuPDF loads document pages without quality loss.</li>
+                        <li><strong>Recursive Chunking:</strong> 500-char chunks with 100-char overlap preserve semantic boundaries.</li>
+                        <li><strong>Metadata Tagging:</strong> Injects <code>doc_id</code>, <code>user_id</code>, <code>page</code>, and deterministic sha256 chunk IDs.</li>
+                        <li><strong>ChromaDB Indexing:</strong> MiniLM-L6-v2 creates 384-dimensional dense vectors.</li>
+                        <li><strong>Hybrid Retrieval:</strong>
+                            <ul>
+                                <li>Top-10 Semantic similarity search via ChromaDB</li>
+                                <li>Top-10 Keyword search via BM25 Okapi</li>
+                            </ul>
+                        </li>
+                        <li><strong>Reciprocal Rank Fusion (RRF):</strong> Fuses semantic and lexical ranks using standard RRF (k=60).</li>
+                        <li><strong>Cross-Encoder Reranking:</strong> MS-MARCO Cross-Encoder evaluates query-chunk cross-attention to select top 3 candidates.</li>
+                        <li><strong>Grounded Generation:</strong> Qwen3.5:4B synthesizes answers with source citations and strict zero-hallucination rules.</li>
+                    </ol>
+                </div>
+
+                <div class="p-3 bg-light rounded-3 border">
+                    <span class="fw-bold small text-dark d-block mb-1"><i class="bi bi-shield-check text-success me-1"></i> Multi-Tenant Security Guarantee:</span>
+                    <p class="small text-muted mb-0" style="line-height: 1.6;">
+                        All document retrieval, BM25 indexing, conversation histories, and vector deletions are strictly filtered by <code>request.user.id</code> on the server. Front-end tampering cannot bypass ownership boundaries.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

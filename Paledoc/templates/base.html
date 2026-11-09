@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Paledoc — Document Intelligence{% endblock %}</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --sidebar-width: 260px;
+            --sidebar-bg: #0f172a;
+            --sidebar-text: #94a3b8;
+            --sidebar-active: #3b82f6;
+            --topbar-height: 64px;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+        }
+
+        /* Sidebar */
+        #sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--sidebar-bg);
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-brand {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .sidebar-brand a {
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .sidebar-brand .brand-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.15rem;
+            font-weight: 800;
+            flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
+        }
+
+        .sidebar-brand .brand-name {
+            color: #fff;
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .sidebar-brand .brand-subtitle {
+            font-size: 0.65rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: block;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem 0;
+        }
+
+        .nav-section-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: #475569;
+            padding: 0.8rem 1.5rem 0.3rem;
+        }
+
+        .sidebar-nav .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 0.65rem 1.5rem;
+            color: var(--sidebar-text);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-left: 3px solid transparent;
+            transition: all 0.15s ease-in-out;
+        }
+
+        .sidebar-nav .nav-link:hover {
+            background: rgba(255,255,255,0.05);
+            color: #f1f5f9;
+        }
+
+        .sidebar-nav .nav-link.active {
+            background: rgba(59,130,246,0.12);
+            color: #60a5fa;
+            border-left-color: var(--sidebar-active);
+            font-weight: 600;
+        }
+
+        .sidebar-nav .nav-link i {
+            font-size: 1.1rem;
+            width: 22px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .sidebar-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            background: rgba(0,0,0,0.15);
+        }
+
+        .sidebar-footer form button {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            width: 100%;
+            padding: 0.5rem 0;
+            background: none;
+            border: none;
+            color: #f87171;
+            font-size: 0.88rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: color 0.15s;
+        }
+
+        .sidebar-footer form button:hover {
+            color: #fca5a5;
+        }
+
+        /* Main layout */
+        #main-wrapper {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top bar */
+        #topbar {
+            height: var(--topbar-height);
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 900;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        .topbar-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        .topbar-user {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #334155;
+            font-size: 0.9rem;
+        }
+
+        .topbar-user .avatar {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Content */
+        #content {
+            flex: 1;
+            padding: 2rem;
+        }
+
+        /* Flash messages */
+        .flash-messages {
+            margin-bottom: 1.5rem;
+        }
+
+        .badge-soft-primary { background: #dbeafe; color: #1d4ed8; }
+        .badge-soft-success { background: #dcfce7; color: #15803d; }
+        .badge-soft-warning { background: #fef3c7; color: #b45309; }
+        .badge-soft-danger  { background: #fee2e2; color: #b91c1c; }
+
+        @media (max-width: 768px) {
+            #sidebar {
+                transform: translateX(-100%);
+            }
+            #main-wrapper {
+                margin-left: 0;
+            }
+        }
+    </style>
+
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<!-- Sidebar -->
+<div id="sidebar">
+    <div class="sidebar-brand">
+        <a href="{% url 'dashboard' %}">
+            <div class="brand-icon">P</div>
+            <div>
+                <span class="brand-name">Paledoc</span>
+                <span class="brand-subtitle">Document Intelligence</span>
+            </div>
+        </a>
+    </div>
+
+    <nav class="sidebar-nav">
+        <div class="nav-section-label">Workspace</div>
+        <a href="{% url 'dashboard' %}" class="nav-link {% block nav_dashboard %}{% endblock %}">
+            <i class="bi bi-grid-1x2-fill"></i>
+            Dashboard
+        </a>
+        <a href="{% url 'document_list' %}" class="nav-link {% block nav_documents %}{% endblock %}">
+            <i class="bi bi-folder2-open"></i>
+            My Documents
+        </a>
+        <a href="{% url 'upload' %}" class="nav-link {% block nav_upload %}{% endblock %}">
+            <i class="bi bi-file-earmark-arrow-up-fill"></i>
+            Upload PDF
+        </a>
+
+        <div class="nav-section-label mt-3">AI Intelligence</div>
+        <a href="{% url 'chat_index' %}" class="nav-link {% block nav_chat %}{% endblock %}">
+            <i class="bi bi-chat-dots-fill"></i>
+            AI Chat
+        </a>
+        <a href="{% url 'summarization' %}" class="nav-link {% block nav_summarize %}{% endblock %}">
+            <i class="bi bi-file-text-fill"></i>
+            Summarization
+        </a>
+        <a href="{% url 'comparison' %}" class="nav-link {% block nav_compare %}{% endblock %}">
+            <i class="bi bi-intersect"></i>
+            Document Comparison
+        </a>
+        <a href="{% url 'research_analysis' %}" class="nav-link {% block nav_research %}{% endblock %}">
+            <i class="bi bi-graph-up-arrow"></i>
+            Research Analysis
+        </a>
+        <a href="{% url 'reference_generator' %}" class="nav-link {% block nav_references %}{% endblock %}">
+            <i class="bi bi-bookmark-check-fill"></i>
+            Reference Generator
+        </a>
+
+        <div class="nav-section-label mt-3">System</div>
+        <a href="{% url 'settings' %}" class="nav-link {% block nav_settings %}{% endblock %}">
+            <i class="bi bi-sliders"></i>
+            System & Models
+        </a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <form method="post" action="{% url 'accounts:logout' %}">
+            {% csrf_token %}
+            <button type="submit">
+                <i class="bi bi-box-arrow-left"></i>
+                Sign Out
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Main wrapper -->
+<div id="main-wrapper">
+
+    <!-- Top bar -->
+    <div id="topbar">
+        <span class="topbar-title">{% block page_title %}Dashboard{% endblock %}</span>
+
+        <div class="topbar-user">
+            <div class="avatar">{{ request.user.username|first|upper }}</div>
+            <div>
+                <span class="fw-semibold d-block lh-1">{{ request.user.username }}</span>
+                <small class="text-muted" style="font-size: 0.75rem;">Local Ollama &bull; Qwen3.5:4B</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content area -->
+    <div id="content">
+
+        <!-- Flash messages -->
+        {% if messages %}
+        <div class="flash-messages">
+            {% for message in messages %}
+            <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags %}{{ message.tags }}{% else %}info{% endif %} alert-dismissible fade show border-0 shadow-sm" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

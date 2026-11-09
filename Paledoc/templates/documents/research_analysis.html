@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Research Paper Analysis — Paledoc{% endblock %}
+{% block page_title %}Research Paper Analysis{% endblock %}
+{% block nav_research %}active{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Left column: document selector -->
+    <div class="col-lg-4 mb-4">
+        <div class="card border-0 shadow-sm rounded-3 bg-white">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-file-earmark-medical text-primary me-2"></i>Select Paper</h6>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    {% csrf_token %}
+                    <p class="text-muted small">Select an academic paper or technical report to extract structured scientific components:</p>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-muted text-uppercase">Document</label>
+                        <select name="document_id" class="form-select" required>
+                            <option value="">-- Choose from uploaded PDFs --</option>
+                            {% for doc in user_documents %}
+                            <option value="{{ doc.id }}" {% if selected_doc and selected_doc.id == doc.id %}selected{% endif %}>
+                                {{ doc.title }} ({{ doc.page_count }} pages)
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="bg-light p-3 rounded-3 mb-4 border">
+                        <span class="fw-bold small text-dark d-block mb-2"><i class="bi bi-list-check text-success me-1"></i> Extracted Components:</span>
+                        <ul class="text-muted small ps-3 mb-0" style="font-size: 0.78rem; line-height: 1.7;">
+                            <li>Research Problem & Gap</li>
+                            <li>Objectives & Hypotheses</li>
+                            <li>Methodology & Framework</li>
+                            <li>Dataset & Benchmarks</li>
+                            <li>Algorithms & Models</li>
+                            <li>Quantitative / Qualitative Results</li>
+                            <li>Limitations & Weaknesses</li>
+                            <li>Future Scope & Directions</li>
+                        </ul>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold" {% if not user_documents %}disabled{% endif %}>
+                        <i class="bi bi-cpu me-1"></i> Extract Research Components
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right column: analysis output -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-3 bg-white h-100">
+            <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold text-dark">
+                    <i class="bi bi-graph-up-arrow text-primary me-2"></i>
+                    {% if selected_doc %}
+                        {{ selected_doc.title }}
+                    {% else %}
+                        Structured Research Analysis
+                    {% endif %}
+                </h6>
+                {% if report_id %}
+                <a href="{% url 'export_report_docx' report_id %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-file-earmark-word me-1"></i> Export to Word (.docx)
+                </a>
+                {% endif %}
+            </div>
+            <div class="card-body p-4">
+                {% if result_text %}
+                <div class="p-3 bg-light rounded-3 border" style="white-space: pre-wrap; line-height: 1.8; font-size: 0.95rem;">
+{{ result_text }}
+                </div>
+                {% else %}
+                <div class="text-center p-5 text-muted my-auto">
+                    <i class="bi bi-journal-code display-4 text-secondary opacity-50 d-block mb-3"></i>
+                    <h6 class="fw-bold">No Analysis Generated Yet</h6>
+                    <p class="small text-muted mb-0">Select an academic paper on the left to extract the research problem, methodology, algorithms, and future scope.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
