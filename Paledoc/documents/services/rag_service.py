@@ -102,10 +102,11 @@ def ask_paledoc(
         return response.content, source_docs
 
     except Exception as exc:
-        logger.error("LLM generation failed: %s", exc)
+        logger.exception("LLM generation failed: %s", exc)
         error_msg = (
             "⚠️ Could not connect to the AI service. "
-            "Please ensure Ollama is running and the qwen3.5:4b model is available.\n\n"
-            f"Technical detail: {exc}"
+            "Please ensure Ollama is running, reachable from the server, "
+            "and the qwen3.5:4b model is available. Your question was saved; "
+            "please try again after Ollama is available."
         )
         return error_msg, source_docs

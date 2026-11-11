@@ -203,21 +203,21 @@ def generate_summary(document, summary_type: str = 'summary_short') -> str:
     if not content.strip():
         return "Unable to extract readable text from this document. Please ensure the PDF is not corrupted or scanned without OCR."
 
-    llm = get_llm()
-    prompt_map = {
-        'summary_short': SUMMARIZE_SHORT_PROMPT,
-        'summary_detailed': SUMMARIZE_DETAILED_PROMPT,
-        'summary_sections': SUMMARIZE_SECTIONS_PROMPT,
-        'summary_findings': SUMMARIZE_FINDINGS_PROMPT,
-    }
-    prompt = prompt_map.get(summary_type, SUMMARIZE_SHORT_PROMPT)
-    chain = prompt | llm
     try:
+        llm = get_llm()
+        prompt_map = {
+            'summary_short': SUMMARIZE_SHORT_PROMPT,
+            'summary_detailed': SUMMARIZE_DETAILED_PROMPT,
+            'summary_sections': SUMMARIZE_SECTIONS_PROMPT,
+            'summary_findings': SUMMARIZE_FINDINGS_PROMPT,
+        }
+        prompt = prompt_map.get(summary_type, SUMMARIZE_SHORT_PROMPT)
+        chain = prompt | llm
         response = chain.invoke({"title": document.title, "content": content})
         return response.content
     except Exception as exc:
         logger.exception("Summarization failed for %s", document.title)
-        return f"⚠️ Error generating summary: {exc}. Please verify Ollama is running."
+        return "⚠️ Could not connect to the AI service. Please verify that Ollama is running and reachable, then try again."
 
 
 def generate_research_analysis(document) -> str:
@@ -226,14 +226,14 @@ def generate_research_analysis(document) -> str:
     if not content.strip():
         return "Unable to extract readable text from this document."
 
-    llm = get_llm()
-    chain = RESEARCH_ANALYSIS_PROMPT | llm
     try:
+        llm = get_llm()
+        chain = RESEARCH_ANALYSIS_PROMPT | llm
         response = chain.invoke({"title": document.title, "content": content})
         return response.content
     except Exception as exc:
         logger.exception("Research analysis failed for %s", document.title)
-        return f"⚠️ Error generating research analysis: {exc}. Please verify Ollama is running."
+        return "⚠️ Could not connect to the AI service. Please verify that Ollama is running and reachable, then try again."
 
 
 def generate_comparison(documents: list) -> str:
@@ -249,14 +249,14 @@ def generate_comparison(documents: list) -> str:
         combined_texts.append(f"=== DOCUMENT {i}: '{doc.title}' (File: {doc.original_filename or doc.title}) ===\n{txt}")
 
     full_context = "\n\n".join(combined_texts)
-    llm = get_llm()
-    chain = COMPARISON_PROMPT | llm
     try:
+        llm = get_llm()
+        chain = COMPARISON_PROMPT | llm
         response = chain.invoke({"documents_text": full_context})
         return response.content
     except Exception as exc:
         logger.exception("Comparison failed")
-        return f"⚠️ Error comparing documents: {exc}. Please verify Ollama is running."
+        return "⚠️ Could not connect to the AI service. Please verify that Ollama is running and reachable, then try again."
 
 
 def generate_reference(document) -> str:
@@ -266,11 +266,11 @@ def generate_reference(document) -> str:
     if not content.strip():
         return "Unable to extract readable text from this document."
 
-    llm = get_llm()
-    chain = REFERENCE_PROMPT | llm
     try:
+        llm = get_llm()
+        chain = REFERENCE_PROMPT | llm
         response = chain.invoke({"title": document.title, "content": content})
         return response.content
     except Exception as exc:
         logger.exception("Reference generation failed for %s", document.title)
-        return f"⚠️ Error generating references: {exc}. Please verify Ollama is running."
+        return "⚠️ Could not connect to the AI service. Please verify that Ollama is running and reachable, then try again."
