@@ -31,7 +31,7 @@ services:
       - DB_NAME=paledoc_db
       - DB_USER=paledoc_user
       - DB_PASSWORD=paledoc_password
-      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       - DJANGO_SETTINGS_MODULE=config.settings
     depends_on:
       db:
